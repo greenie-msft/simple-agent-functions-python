@@ -147,3 +147,9 @@ Thumbs.db
 # Azure Developer CLI and local agent state
 .azure/
 local.settings.json
+
+# Azure Functions
+.python_packages/
+__azurite_db*__.json
+__blobstorage__/
+__queuestorage__/

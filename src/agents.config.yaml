@@ -1,0 +1,5 @@
+# Global configuration shared by every agent in this function app.
+# Values that start with $ are substituted from app settings at load time.
+
+model: $FOUNDRY_MODEL
+timeout: 900

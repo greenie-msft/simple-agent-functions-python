@@ -1,26 +1,23 @@
-"""Console chat client for the Repo Digest hosted agent."""
+"""Console chat client for the serverless Repo Digest agent.
+
+Sends prompts to the built-in chat endpoint exposed by the ``main`` agent and prints
+the response. Set AGENT_URL to target a deployed function app and FUNCTION_KEY when the
+endpoint requires a function key.
+"""
 import json
 import os
 import urllib.request
 
-BASE_URL = os.environ.get("AGENT_URL", "http://localhost:8088").rstrip("/")
-
-
-def _extract_response_text(response):
-    if isinstance(response, dict):
-        if response.get("output_text"):
-            return response["output_text"]
-        for item in response.get("output", []):
-            for content in item.get("content", []):
-                if content.get("type") in ("output_text", "text") and content.get("text"):
-                    return content["text"]
-    return json.dumps(response)
-
+BASE_URL = os.environ.get("AGENT_URL", "http://localhost:7071").rstrip("/")
+FUNCTION_KEY = os.environ.get("FUNCTION_KEY", "")
+CHAT_URL = f"{BASE_URL}/agents/main/chat"
 
 print("=== Repo Digest Agent Chat ===")
-print(f"Endpoint: {BASE_URL}/responses")
-print("Try: Create a concise daily repo digest.")
-print(f"Type 'exit' or 'quit' to end.\n")
+print(f"Endpoint: {CHAT_URL}")
+print("Try: Create a concise repo digest for Azure/azure-functions-host.")
+print("Type 'exit' or 'quit' to end.\n")
+
+session_id = None
 
 while True:
     message = input("You: ").strip()
@@ -28,17 +25,24 @@ while True:
         print("Goodbye!")
         break
 
-    url = f"{BASE_URL}/responses"
+    payload = {"prompt": message}
+    if session_id:
+        payload["session_id"] = session_id
+
+    headers = {"Content-Type": "application/json"}
+    if FUNCTION_KEY:
+        headers["x-functions-key"] = FUNCTION_KEY
+
     try:
-        body = json.dumps({"input": message, "stream": False}).encode()
         req = urllib.request.Request(
-            url,
-            data=body,
-            headers={"Content-Type": "application/json"},
+            CHAT_URL,
+            data=json.dumps(payload).encode(),
+            headers=headers,
             method="POST",
         )
         with urllib.request.urlopen(req) as resp:
             response = json.loads(resp.read().decode())
-            print(f"\nAgent: {_extract_response_text(response)}\n")
+        session_id = response.get("session_id", session_id)
+        print(f"\nAgent: {response.get('response') or json.dumps(response)}\n")
     except Exception as e:
         print(f"\nError: {e}\n")

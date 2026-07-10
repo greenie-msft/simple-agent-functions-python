@@ -1,0 +1,20 @@
+@baseUrl = http://localhost:7071
+
+### Chat with the Repo Digest agent
+POST {{baseUrl}}/agents/main/chat
+Content-Type: application/json
+
+{
+  "prompt": "Create a concise repo digest for Azure/azure-functions-host for the last 24 hours."
+}
+
+### Ask about a different repository
+POST {{baseUrl}}/agents/main/chat
+Content-Type: application/json
+
+{
+  "prompt": "What pull requests were merged in Azure/azure-functions-python-worker in the last 48 hours?"
+}
+
+### Open the built-in debug chat UI in a browser
+GET {{baseUrl}}/agents/main/

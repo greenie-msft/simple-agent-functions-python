@@ -1,27 +1,30 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/python
 {
-	"name": "Foundry Hosted Agent Quickstart - Python",
-	"dockerFile": "Dockerfile",
+	"name": "Serverless Agents Quickstart - Python",
+	"image": "mcr.microsoft.com/devcontainers/python:3.13-bookworm",
 	"features": {
-		"azure-cli": "latest"
+		"ghcr.io/devcontainers/features/azure-cli:1": {},
+		"ghcr.io/devcontainers/features/node:1": {},
+		"ghcr.io/azure/azure-dev/azd:latest": {}
 	},
-	"forwardPorts": [8088],
+	"forwardPorts": [7071],
 	"portsAttributes": {
-		"8088": {
-			"label": "Foundry Hosted Agent",
+		"7071": {
+			"label": "Functions host",
 			"onAutoForward": "notify"
 		}
 	},
-	"postCreateCommand": "bash -c 'echo \"export PROMPT_DIRTRIM=1\" >> ~/.bashrc || true; azd ext install microsoft.foundry || true; cat .devcontainer/first-run-notice.txt || echo \"Setup completed\"'",
+	"postCreateCommand": "bash -c 'echo \"export PROMPT_DIRTRIM=1\" >> ~/.bashrc || true; npm i -g azure-functions-core-tools@4 azurite || true; pip install -r src/requirements.txt || true; cat .devcontainer/first-run-notice.txt || echo \"Setup completed\"'",
 	"customizations": {
 		"vscode": {
 			"extensions": [
 				"ms-python.python",
 				"ms-python.debugpy",
 				"ms-python.vscode-python-envs",
-				"ms-azuretools.vscode-docker",
+				"ms-azuretools.vscode-azurefunctions",
 				"ms-azuretools.azure-ai-foundry",
+				"Azurite.azurite",
 				"GitHub.copilot",
 				"humao.rest-client"
 			]
