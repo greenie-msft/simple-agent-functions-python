@@ -147,7 +147,7 @@ module storage 'br/public:avm/res/storage/storage-account:0.8.3' = {
   params: {
     name: '${abbrs.storageStorageAccounts}${resourceToken}'
     allowBlobPublicAccess: false
-    allowSharedKeyAccess: true
+    allowSharedKeyAccess: false
     dnsEndpointType: 'Standard'
     publicNetworkAccess: 'Enabled'
     networkAcls: {

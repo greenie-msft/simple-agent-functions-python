@@ -7,9 +7,9 @@ Agents are defined as markdown files (`*.agent.md`) and connect to external syst
 The app hosts a single agent, **`main`**, that does double duty:
 
 - **On a timer** — it builds a repo digest once a day and writes it to the function logs.
-- **On demand** — its built-in HTTP endpoints (chat API + browser chat UI) let you ask about recent PRs, issues, or failing workflow runs any time.
+- **On demand** — its built-in HTTP endpoints (chat API + browser chat UI) let you ask about recent PRs or issues any time.
 
-The agent reads GitHub through a **GitHub connector published as an MCP server by an [Azure Connector Namespace](https://learn.microsoft.com/azure/logic-apps/connector-namespace/connector-namespace-overview) (preview)**. The connector namespace stores the GitHub connection and its credentials, and exposes the GitHub MCP tools (issues, pull requests, and Actions workflow runs) to the agent — so there is no custom API-client code or GitHub token in the app.
+The agent reads GitHub through a **GitHub connector published as an MCP server by an [Azure Connector Namespace](https://learn.microsoft.com/azure/logic-apps/connector-namespace/connector-namespace-overview) (preview)**. The connector namespace stores the GitHub connection and its credentials, and exposes GitHub operations as MCP tools — listing pull requests, listing issues, and searching — so there is no custom API-client code or GitHub token in the app.
 
 > This is the Azure Functions equivalent of the Foundry Hosted Agent sample. Looking for other language versions? See [C#](https://github.com/Azure-Samples/simple-agent-functions-dotnet) or [TypeScript](https://github.com/Azure-Samples/simple-agent-functions-typescript).
 

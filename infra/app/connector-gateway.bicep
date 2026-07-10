@@ -71,15 +71,15 @@ resource githubConnectionDeployerAccessPolicy 'Microsoft.Web/connectorGateways/c
   }
 }
 
-// Publish the GitHub connector as an MCP server. The "Github MCP Server" operation
-// (InvokeMCPServer) surfaces the full GitHub MCP toolset — issues, pull requests, and
-// Actions workflow runs — through the connector namespace's managed GitHub connection.
+// Publish the GitHub connector as an MCP server exposing concrete repository-activity
+// operations as MCP tools (issues and pull requests). The connector namespace does not
+// expose a GitHub Actions workflow-runs operation, so the digest covers PRs and issues.
 resource githubMcpServerConfig 'Microsoft.Web/connectorGateways/mcpserverconfigs@2026-05-01-preview' = {
   parent: connectorGateway
   name: mcpServerConfigName
   properties: {
     state: 'Enabled'
-    description: 'GitHub repository activity (issues, pull requests, and workflow runs) exposed as an MCP server.'
+    description: 'GitHub repository activity (issues and pull requests) exposed as an MCP server.'
     connectors: [
       {
         name: 'github'
@@ -88,11 +88,131 @@ resource githubMcpServerConfig 'Microsoft.Web/connectorGateways/mcpserverconfigs
         description: 'Read GitHub repository activity for digests.'
         operations: [
           {
-            name: 'InvokeMCPServer'
-            displayName: 'GitHub MCP Server'
-            description: 'Exposes the GitHub MCP server tools for issues, pull requests, and Actions workflow runs.'
+            name: 'GetPullRequests'
+            displayName: 'List pull requests'
+            description: 'Get pull requests for a repository. Use state=open for open PRs, state=closed for merged/closed PRs.'
             userParameters: []
-            agentParameters: []
+            agentParameters: [
+              {
+                name: 'repositoryOwner'
+                schema: {
+                  type: 'string'
+                  description: 'Repository owner (org or user), e.g. Azure'
+                  required: true
+                }
+              }
+              {
+                name: 'repositoryName'
+                schema: {
+                  type: 'string'
+                  description: 'Repository name, e.g. azure-functions-host'
+                  required: true
+                }
+              }
+              {
+                name: 'state'
+                schema: {
+                  type: 'string'
+                  description: 'Filter by state: open, closed, or all'
+                }
+              }
+              {
+                name: 'sort'
+                schema: {
+                  type: 'string'
+                  description: 'Sort by: created, updated, or popularity'
+                }
+              }
+              {
+                name: 'direction'
+                schema: {
+                  type: 'string'
+                  description: 'Sort direction: asc or desc'
+                }
+              }
+              {
+                name: 'per_page'
+                schema: {
+                  type: 'integer'
+                  description: 'Results per page (max 100)'
+                }
+              }
+            ]
+          }
+          {
+            name: 'GetIssues'
+            displayName: 'List issues'
+            description: 'Get issues for a repository. Use state and since to filter; results may include pull requests.'
+            userParameters: []
+            agentParameters: [
+              {
+                name: 'repositoryOwner'
+                schema: {
+                  type: 'string'
+                  description: 'Repository owner (org or user), e.g. Azure'
+                  required: true
+                }
+              }
+              {
+                name: 'repositoryName'
+                schema: {
+                  type: 'string'
+                  description: 'Repository name, e.g. azure-functions-host'
+                  required: true
+                }
+              }
+              {
+                name: 'state'
+                schema: {
+                  type: 'string'
+                  description: 'Filter by state: open, closed, or all'
+                }
+              }
+              {
+                name: 'since'
+                schema: {
+                  type: 'string'
+                  description: 'ISO 8601 timestamp; only issues updated at or after this time'
+                }
+              }
+              {
+                name: 'sort'
+                schema: {
+                  type: 'string'
+                  description: 'Sort by: created, updated, or comments'
+                }
+              }
+              {
+                name: 'direction'
+                schema: {
+                  type: 'string'
+                  description: 'Sort direction: asc or desc'
+                }
+              }
+              {
+                name: 'per_page'
+                schema: {
+                  type: 'integer'
+                  description: 'Results per page (max 100)'
+                }
+              }
+            ]
+          }
+          {
+            name: 'SearchGithubWithQuery'
+            displayName: 'Search GitHub'
+            description: 'Search GitHub using a query string (GitHub search syntax).'
+            userParameters: []
+            agentParameters: [
+              {
+                name: 'query'
+                schema: {
+                  type: 'string'
+                  description: 'GitHub search query, e.g. repo:Azure/azure-functions-host is:pr is:merged'
+                  required: true
+                }
+              }
+            ]
           }
         ]
       }

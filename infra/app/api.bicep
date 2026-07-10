@@ -50,6 +50,17 @@ module api 'br/public:avm/res/web/site:0.15.1' = {
         identityId
       ]
     }
+    // SFI: disable SCM/FTP basic (local) auth; deploy and management use Entra identity.
+    basicPublishingCredentialsPolicies: [
+      {
+        name: 'ftp'
+        allow: false
+      }
+      {
+        name: 'scm'
+        allow: false
+      }
+    ]
     functionAppConfig: {
       deployment: {
         storage: {
