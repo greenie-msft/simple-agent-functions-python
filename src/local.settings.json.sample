@@ -6,8 +6,6 @@
     "AZURE_FUNCTIONS_AGENTS_PROVIDER": "foundry",
     "FOUNDRY_PROJECT_ENDPOINT": "",
     "FOUNDRY_MODEL": "gpt-5-mini",
-    "GITHUB_REPOSITORY": "Azure/azure-functions-host",
-    "GITHUB_MCP_SERVER_URL": "",
-    "GITHUB_MCP_CLIENT_ID": ""
+    "GITHUB_REPOSITORY": "Azure/azure-functions-host"
   }
 }

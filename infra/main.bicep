@@ -6,7 +6,7 @@ targetScope = 'subscription'
 param environmentName string
 
 @minLength(1)
-@description('Primary location for all resources. Must support Azure Functions Flex Consumption, Microsoft.Web connectorGateways, and the Microsoft Foundry gpt-5-mini Global Standard deployment.')
+@description('Primary location for all resources. Must support Azure Functions Flex Consumption and the Microsoft Foundry gpt-5-mini Global Standard deployment.')
 @allowed([
   'centralus'
   'eastus'
@@ -45,9 +45,6 @@ var foundryAccountName = 'cog-${resourceToken}'
 var foundryProjectName = '${foundryAccountName}-proj'
 var deploymentStorageContainerName = 'app-package-${take(functionAppName, 32)}-${take(toLower(uniqueString(functionAppName, resourceToken)), 7)}'
 var deployerPrincipalId = deployer().objectId
-var connectorGatewayName = 'cg-${resourceToken}'
-var githubConnectionName = 'github'
-var githubMcpServerConfigName = 'github-repo-activity'
 
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: '${abbrs.resourcesResourceGroups}${environmentName}'
@@ -79,22 +76,6 @@ module foundry './app/foundry.bicep' = {
     deploymentCapacity: foundryDeploymentCapacity
     managedIdentityPrincipalId: apiUserAssignedIdentity.outputs.principalId
     deployerPrincipalId: deployerPrincipalId
-  }
-}
-
-// GitHub connection published as an MCP server via an Azure Connector Namespace (preview)
-module githubConnector './app/connector-gateway.bicep' = {
-  name: 'githubConnector'
-  scope: rg
-  params: {
-    connectorGatewayName: connectorGatewayName
-    connectionName: githubConnectionName
-    mcpServerConfigName: githubMcpServerConfigName
-    location: location
-    tags: tags
-    managedIdentityPrincipalId: apiUserAssignedIdentity.outputs.principalId
-    deployerPrincipalId: deployerPrincipalId
-    tenantId: tenant().tenantId
   }
 }
 
@@ -134,8 +115,6 @@ module api './app/api.bicep' = {
       FOUNDRY_MODEL: foundry.outputs.modelDeploymentName
       AZURE_CLIENT_ID: apiUserAssignedIdentity.outputs.clientId
       GITHUB_REPOSITORY: githubRepository
-      GITHUB_MCP_SERVER_URL: githubConnector.outputs.mcpEndpointUrl
-      GITHUB_MCP_CLIENT_ID: apiUserAssignedIdentity.outputs.clientId
       ENABLE_MULTIPLATFORM_BUILD: 'true'
     }
   }
@@ -202,5 +181,3 @@ output AZURE_FUNCTION_NAME string = api.outputs.SERVICE_API_NAME
 output FOUNDRY_PROJECT_ENDPOINT string = foundry.outputs.projectEndpoint
 output FOUNDRY_MODEL string = foundry.outputs.modelDeploymentName
 output GITHUB_REPOSITORY string = githubRepository
-output GITHUB_CONNECTOR_GATEWAY_NAME string = githubConnector.outputs.connectorGatewayName
-output GITHUB_MCP_SERVER_URL string = githubConnector.outputs.mcpEndpointUrl

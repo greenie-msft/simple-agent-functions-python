@@ -1,0 +1,21 @@
+[project]
+name = "repo-digest-agent"
+version = "1.0.0"
+description = "Serverless GitHub repo-digest agent on the Azure Functions Agents Runtime (preview)."
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "azurefunctions-agents-runtime>=0.1.0b1",
+    "azure-functions",
+    "azure-identity",
+]
+
+[dependency-groups]
+dev = [
+    "ruff",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 120

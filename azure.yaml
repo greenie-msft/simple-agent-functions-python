@@ -8,3 +8,25 @@ services:
     project: ./src
     language: python
     host: function
+    hooks:
+      # Regenerate requirements.txt from pyproject.toml + uv.lock so uv stays the
+      # single source of truth. Runs from the service dir (./src) before packaging.
+      prepackage:
+        posix:
+          shell: sh
+          run: uv export --format requirements-txt --no-hashes --no-dev --no-emit-project --output-file requirements.txt
+        windows:
+          shell: pwsh
+          run: uv export --format requirements-txt --no-hashes --no-dev --no-emit-project --output-file requirements.txt
+hooks:
+  # After provisioning, write src/local.settings.json from the azd environment so
+  # `uv run func start` works locally without copying a sample file by hand.
+  postprovision:
+    posix:
+      shell: sh
+      run: ./infra/scripts/setuplocalenvironment.sh
+      interactive: true
+    windows:
+      shell: pwsh
+      run: ./infra/scripts/setuplocalenvironment.ps1
+      interactive: true
