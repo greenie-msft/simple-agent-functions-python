@@ -4,12 +4,12 @@ This sample is a **serverless AI agent** built on the [Azure Functions Serverles
 
 Agents are defined as markdown files (`*.agent.md`) and custom capabilities are plain Python functions in `tools/`. The app deploys to an [Azure Functions Flex Consumption](https://learn.microsoft.com/azure/azure-functions/flex-consumption-plan) app with [Azure Developer CLI (`azd`)](https://learn.microsoft.com/azure/developer/azure-developer-cli/), and uses a Microsoft Foundry model deployment for inference.
 
-The app hosts two agents:
+The app hosts a single agent, **`main`**, that does double duty:
 
-- **`main`** — a chat agent with built-in HTTP endpoints (chat API + browser debug UI). Ask it about recent PRs, issues, or failing workflow runs any time.
-- **`daily_repo_digest`** — a timer-triggered agent that builds a digest once a day and writes it to the function logs.
+- **On a timer** — it builds a repo digest once a day and writes it to the function logs.
+- **On demand** — its built-in HTTP endpoints (chat API + browser chat UI) let you ask about recent PRs, issues, or failing workflow runs any time.
 
-Both agents share the `get_repo_digest` tool, which gathers recent GitHub activity (merged/open PRs, new/closed issues, and failing workflow runs).
+The agent uses the `get_repo_digest` tool, which gathers recent GitHub activity (merged/open PRs, new/closed issues, and failing workflow runs).
 
 > This is the Azure Functions equivalent of the Foundry Hosted Agent sample. Looking for other language versions? See [C#](https://github.com/Azure-Samples/simple-agent-functions-dotnet) or [TypeScript](https://github.com/Azure-Samples/simple-agent-functions-typescript).
 
@@ -18,12 +18,10 @@ Both agents share the `get_repo_digest` tool, which gathers recent GitHub activi
 ```mermaid
 flowchart LR
     user([User]) -->|POST /agents/main/chat| main[main agent]
-    timer([Timer: 16:00 UTC daily]) --> daily[daily_repo_digest agent]
+    timer([Timer: 16:00 UTC daily]) --> main
     main --> tool[get_repo_digest tool]
-    daily --> tool
     tool -->|GitHub REST API| gh[(GitHub)]
     main --> model[Foundry gpt-5-mini]
-    daily --> model
 ```
 
 ## Prerequisites
@@ -63,7 +61,7 @@ Start the agents (Azurite is started automatically by Core Tools if the Azurite 
 func start
 ```
 
-Then chat with the `main` agent:
+Then open the built-in chat UI at <http://localhost:7071/agents/main/> and chat with the `main` agent, or call the chat endpoint directly:
 
 ```bash
 curl -sS -X POST http://localhost:7071/agents/main/chat \
@@ -71,11 +69,7 @@ curl -sS -X POST http://localhost:7071/agents/main/chat \
   -d '{"prompt": "Create a concise repo digest for Azure/azure-functions-host."}'
 ```
 
-Or open the built-in debug chat UI at <http://localhost:7071/agents/main/>, use the requests in [`test.http`](test.http), or run the console client:
-
-```bash
-python chat.py
-```
+You can also use the sample requests in [`test.http`](test.http).
 
 ## Deploy to Azure
 
@@ -87,7 +81,7 @@ azd up
 
 `azd` provisions the function app (Flex Consumption), a Microsoft Foundry project with a `gpt-5-mini` deployment, storage, Application Insights, and a user-assigned managed identity with the required role assignments. The function app authenticates to Foundry and storage with the managed identity — no keys in app settings.
 
-Send a request to the deployed chat endpoint (get the function app name from `azd env get-values`):
+Once deployed, open the built-in chat UI at `https://<your-function-app>.azurewebsites.net/agents/main/`, or send a request to the chat endpoint (get the function app name from `azd env get-values`):
 
 ```bash
 curl -sS -X POST https://<your-function-app>.azurewebsites.net/agents/main/chat \
@@ -114,7 +108,7 @@ Other settings you can tune in `infra/main.parameters.json` (or via matching `az
 
 ### Schedule and time zone
 
-The daily agent runs on the NCRONTAB schedule `0 0 16 * * *` — **16:00 UTC**, which is **9 AM Pacific Daylight Time** (8 AM during Pacific Standard Time). Linux Flex Consumption does not support the `WEBSITE_TIME_ZONE`/`TZ` setting, so the schedule is expressed in UTC. Adjust the `schedule` in [`src/daily_repo_digest.agent.md`](src/daily_repo_digest.agent.md) if you need a different time.
+The `main` agent runs on the NCRONTAB schedule `0 0 16 * * *` — **16:00 UTC**, which is **9 AM Pacific Daylight Time** (8 AM during Pacific Standard Time). Linux Flex Consumption does not support the `WEBSITE_TIME_ZONE`/`TZ` setting, so the schedule is expressed in UTC. Adjust the `schedule` in [`src/main.agent.md`](src/main.agent.md) if you need a different time.
 
 ## Project structure
 
@@ -125,15 +119,13 @@ infra/                           Bicep infrastructure
   app/{api,foundry,rbac}.bicep     function app, Foundry account/model, role assignments
 src/
   function_app.py                  app = create_function_app()
-  main.agent.md                    chat agent with built-in endpoints
-  daily_repo_digest.agent.md       timer-triggered daily digest agent
+  main.agent.md                    timer-triggered digest agent with a built-in chat interface
   agents.config.yaml               shared model + timeout configuration
   host.json                        Functions host configuration
   requirements.txt                 azurefunctions-agents-runtime
   local.settings.json.sample       local configuration template
   tools/
     get_repo_digest.py             gathers GitHub PRs, issues, and workflow runs
-chat.py                          console chat client
 test.http                        sample REST Client requests
 ```
 
@@ -141,9 +133,9 @@ test.http                        sample REST Client requests
 
 This project started as a Foundry Hosted Agent (Microsoft Agent Framework running in a container) and was converted to the Azure Functions serverless agents model:
 
-- The agent instructions moved from Python (`repo_digest_agent.py`) into markdown agent files.
+- The agent instructions moved from Python (`repo_digest_agent.py`) into a single markdown agent file (`src/main.agent.md`).
 - The `get_repo_digest` tool moved into `src/tools/` as a runtime tool.
-- Container hosting (`Dockerfile`, `main.py`, `agent.yaml`) was replaced by the Functions host, and the Foundry daily *routine* was replaced by a timer-triggered agent.
+- Container hosting (`Dockerfile`, `main.py`, `agent.yaml`) was replaced by the Functions host. The Foundry daily *routine* and the interactive Responses endpoint collapsed into one agent that carries both a `timer_trigger` and built-in chat endpoints.
 
 ## Learn more
 
